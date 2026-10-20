@@ -10,11 +10,4 @@ export type { LLMDecisionModelOptions } from './llm-decision-model.js'
 export { TypeSafeDecisionModel } from './typesafe-decision-model.js'
 export type { TypeSafeDecisionModelOptions } from './typesafe-decision-model.js'
 export { defineQuestions, Uncertain } from './types.js'
-export type {
-  AnswerOf,
-  AskOptions,
-  DecisionInput,
-  DecisionMetadata,
-  DecisionResult,
-  Question,
-} from './types.js'
+export type { AnswerOf, AskOptions, DecisionInput, DecisionResult, Question } from './types.js'

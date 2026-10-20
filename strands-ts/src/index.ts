@@ -208,7 +208,6 @@ export type {
   AnswerOf,
   AskOptions,
   DecisionInput,
-  DecisionMetadata,
   DecisionResult,
   DecisionsAPIDecisionModelOptions,
   LLMDecisionModelOptions,
