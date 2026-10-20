@@ -1,9 +1,9 @@
-/**
- * TypeSafe/Jev decision-model provider.
- */
-
 import { DecisionModel } from './decision-model.js'
-import { askSystemOne, resolveSystemOneProviderConfig, type SystemOneProviderConfig } from './system-one-http-adapter.js'
+import {
+  askSystemOne,
+  resolveSystemOneProviderConfig,
+  type SystemOneProviderConfig,
+} from './system-one-http-adapter.js'
 import type { DecisionInput, DecisionResult, Question } from './types.js'
 
 const TYPE_SAFE_ENDPOINT = 'https://api.typesafe.ai/v1/systemone'
@@ -24,11 +24,7 @@ export interface TypeSafeDecisionModelOptions {
   readonly apiKey?: string
   /** Jev model identifier. Defaults to `jev-latest`. */
   readonly modelId?: string
-  /**
-   * Minimum confidence used when a question permits uncertainty without its own
-   * `minConfidence`. Defaults to the selected model's provider-defined
-   * threshold, or `0.5` when the model has no configured default.
-   */
+  /** Default minimum confidence; defaults to the model threshold or `0.5`. */
   readonly defaultMinConfidence?: number
   /** Custom fetch implementation, primarily for transport configuration and tests. */
   readonly fetch?: typeof globalThis.fetch
@@ -36,9 +32,6 @@ export interface TypeSafeDecisionModelOptions {
 
 /**
  * Decision model backed by TypeSafe's hosted Jev API.
- *
- * Boolean questions map to Noul and string choices map to Choice. Confidence is
- * normalized across both question types before uncertainty thresholds are applied.
  *
  * @example
  * ```typescript
@@ -52,8 +45,6 @@ export class TypeSafeDecisionModel extends DecisionModel {
   private readonly _providerConfig: SystemOneProviderConfig
 
   /**
-   * Create a TypeSafe-backed decision model.
-   *
    * @param options - Provider, model, and confidence configuration.
    * @throws Error if the API key, confidence threshold, or fetch implementation is invalid.
    */

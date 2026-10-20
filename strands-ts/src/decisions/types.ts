@@ -118,10 +118,7 @@ export interface DecisionResult<Q extends Record<string, Question> = Record<stri
     modelId?: string
     /** Per-question probability distributions, keyed by answer value. */
     probabilities?: { readonly [K in keyof Q]: Readonly<Record<string, number>> }
-    /**
-     * Per-question confidence values in `[0.0, 1.0]`. API-backed providers use
-     * native Choice confidence and derive Noul confidence as `|2p - 1|`.
-     */
+    /** Per-question confidence values in `[0.0, 1.0]`. */
     confidence?: { readonly [K in keyof Q]: number }
   }
 }

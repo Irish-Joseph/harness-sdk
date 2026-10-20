@@ -1,9 +1,3 @@
-/**
- * Shared `/v1/systemone` HTTP adapter for compatible decision-model providers.
- *
- * @internal
- */
-
 import { ContextWindowOverflowError, ModelError, ModelThrottledError, normalizeError } from '../errors.js'
 import { Message, type ContentBlock } from '../types/messages.js'
 import { Uncertain, type AnswerOf, type DecisionInput, type DecisionResult, type Question } from './types.js'
