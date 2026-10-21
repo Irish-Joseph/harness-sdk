@@ -328,9 +328,11 @@ function resolveMinConfidence(question: Question, providerDefault: number): numb
 function parseUsage(value: unknown): { inputTokens: number; outputTokens: number; totalTokens: number } | undefined {
   if (value === undefined || value === null) return undefined
   const usage = requireRecord(value, 'decision provider usage')
-  if (usage['input_tokens'] === null || usage['output_tokens'] === null) return undefined
-  const inputTokens = requireNonNegativeNumber(usage['input_tokens'], 'usage.input_tokens')
-  const outputTokens = requireNonNegativeNumber(usage['output_tokens'], 'usage.output_tokens')
+  const inputTokens = usage['input_tokens']
+  const outputTokens = usage['output_tokens']
+  if (typeof inputTokens !== 'number' || typeof outputTokens !== 'number' || inputTokens < 0 || outputTokens < 0) {
+    return undefined
+  }
   return { inputTokens, outputTokens, totalTokens: inputTokens + outputTokens }
 }
 
