@@ -218,6 +218,7 @@ function errorDetail(body: unknown): string | undefined {
   for (const field of ['error', 'message', 'detail']) {
     const value = body[field]
     if (typeof value === 'string') return value
+    if (isRecord(value) && typeof value['message'] === 'string') return value['message']
   }
   return undefined
 }
