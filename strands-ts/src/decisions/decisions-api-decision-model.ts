@@ -8,12 +8,7 @@ import type { DecisionInput, DecisionResult, Question } from './types.js'
 
 const DECISIONS_API_ENDPOINT = 'https://decisionapi.net/v1/systemone'
 const DECISIONS_API_DEFAULT_MODEL_ID = '~typesafe/jev-latest'
-const DECISIONS_API_FALLBACK_MIN_CONFIDENCE = 0.5
-const DECISIONS_API_MIN_CONFIDENCE_BY_MODEL: Readonly<Record<string, number>> = {
-  '~typesafe/jev-latest': 0.5,
-  'typesafe/jev-1.14': 0.5,
-  'typesafe/jev-1.13': 0.5,
-}
+const DECISIONS_API_DEFAULT_MIN_CONFIDENCE = 0.5
 const DECISIONS_API_MAX_QUESTIONS = 8
 const DECISIONS_API_MAX_BODY_BYTES = 32 * 1024
 
@@ -23,7 +18,7 @@ export interface DecisionsAPIDecisionModelOptions {
   readonly apiKey?: string
   /** Decisions API model identifier. Defaults to `~typesafe/jev-latest`. */
   readonly modelId?: string
-  /** Default minimum confidence; defaults to the model threshold or `0.5`. */
+  /** Default minimum confidence. Defaults to `0.5`. */
   readonly defaultMinConfidence?: number
   /** Custom fetch implementation, primarily for transport configuration and tests. */
   readonly fetch?: typeof globalThis.fetch
@@ -55,8 +50,7 @@ export class DecisionsAPIDecisionModel extends DecisionModel {
       endpoint: DECISIONS_API_ENDPOINT,
       apiKeyEnvironmentVariable: 'JEV_API_KEY',
       modelId: DECISIONS_API_DEFAULT_MODEL_ID,
-      modelMinConfidence: DECISIONS_API_MIN_CONFIDENCE_BY_MODEL,
-      fallbackMinConfidence: DECISIONS_API_FALLBACK_MIN_CONFIDENCE,
+      defaultMinConfidence: DECISIONS_API_DEFAULT_MIN_CONFIDENCE,
       maxQuestions: DECISIONS_API_MAX_QUESTIONS,
       maxBodyBytes: DECISIONS_API_MAX_BODY_BYTES,
     })

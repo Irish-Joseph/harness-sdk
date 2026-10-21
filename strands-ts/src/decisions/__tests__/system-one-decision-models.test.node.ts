@@ -5,7 +5,6 @@ import { ImageBlock } from '../../types/media.js'
 import { Message, TextBlock } from '../../types/messages.js'
 import { DecisionModel } from '../decision-model.js'
 import { DecisionsAPIDecisionModel } from '../decisions-api-decision-model.js'
-import { askSystemOne, resolveSystemOneProviderConfig } from '../system-one-http-adapter.js'
 import { TypeSafeDecisionModel } from '../typesafe-decision-model.js'
 import { Uncertain } from '../types.js'
 
@@ -134,6 +133,18 @@ describe.each(PROVIDERS)('$name', ({ create, endpoint, defaultModelId, providerN
           confidence: { urgent: 0.8, department: 0.55 },
         },
       })
+    })
+
+    it('applies the provider-wide default minimum confidence', async () => {
+      const decision = create({
+        apiKey: 'test-key',
+        fetch: fakeFetch(responseBody({ q: { type: 'noul', noul: 0.625 } })),
+      })
+
+      const result = await decision.ask('state', { q: { question: 'ok?', choices: 'boolean' } })
+
+      expect(result.answers).toEqual({ q: new Uncertain() })
+      expect(result.metadata.confidence).toEqual({ q: 0.25 })
     })
 
     it('applies question override, provider default, and disabled uncertainty in precedence order', async () => {
@@ -345,29 +356,6 @@ describe.each(PROVIDERS)('$name', ({ create, endpoint, defaultModelId, providerN
         /defaultMinConfidence must be in \[0.0, 1.0\]/
       )
     })
-  })
-})
-
-describe('response-model confidence defaults', () => {
-  it('uses the resolved model threshold before the requested-model fallback', async () => {
-    const fetch = fakeFetch(responseBody({ q: { type: 'noul', noul: 0.8 } }))
-    const config = resolveSystemOneProviderConfig(
-      { apiKey: 'test-key', modelId: 'moving-alias', fetch },
-      {
-        className: 'TestDecisionModel',
-        providerName: 'test',
-        endpoint: 'https://example.com/v1/systemone',
-        apiKeyEnvironmentVariable: 'TEST_API_KEY',
-        modelId: 'moving-alias',
-        modelMinConfidence: { 'resolved-model': 0.7 },
-        fallbackMinConfidence: 0.5,
-        maxBodyBytes: 1024,
-      }
-    )
-
-    const result = await askSystemOne(config, 'state', { q: { question: 'ok?', choices: 'boolean' } })
-
-    expect(result.answers.q).toEqual(new Uncertain())
   })
 })
 

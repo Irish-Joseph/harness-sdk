@@ -36,7 +36,7 @@ export interface Question {
   uncertainty?:
     | boolean
     | {
-        minConfidence?: number // [0, 1]. Overrides the provider's model-specific
+        minConfidence?: number // [0, 1]. Overrides the provider's
         // default confidence threshold. Omitted/true permits Uncertain; false
         // requires the provider to return its selected answer.
       }
@@ -89,7 +89,7 @@ const result = await llmDecisionModel.ask('The fruit is an apple', {
 `Uncertain` is a possible answer for every question unless the caller sets `uncertainty: false`. Each implementation handles uncertainty according to the evidence it has:
 
 - `LLMDecisionModel` includes `uncertain` as an allowed model answer.
-- API-backed decision models compare per-answer confidence with a threshold. An explicit `uncertainty.minConfidence` takes precedence over the provider class's default for the resolved model; an unknown model falls back to `0.5`.
+- API-backed decision models compare per-answer confidence with a threshold. An explicit `uncertainty.minConfidence` takes precedence over the provider instance's `defaultMinConfidence`; otherwise each provider uses its API-wide default of `0.5`.
 - Choice uses the API-returned confidence. Noul returns only a yes probability `p`, so its confidence is `|2p - 1|`, on the same scale where an even split is `0` and certainty is `1`.
 
 A provider returns `Uncertain` when uncertainty is enabled and `confidence < minConfidence`; equality passes. Metadata retains every question's probability distribution and confidence even when its public answer is `Uncertain`.
@@ -183,7 +183,7 @@ export interface Question<C extends 'boolean' | readonly string[] = 'boolean' | 
   uncertainty?:
     | boolean
     | {
-        minConfidence?: number // [0, 1]. Overrides the provider's model-specific
+        minConfidence?: number // [0, 1]. Overrides the provider's
         // default confidence threshold. Omitted/true permits Uncertain; false
         // requires the provider to return its selected answer.
       }

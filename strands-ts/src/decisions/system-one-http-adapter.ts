@@ -11,7 +11,7 @@ export interface SystemOneProviderConfig {
   endpoint: string
   apiKey: string
   modelId: string
-  minConfidenceForModel: (modelId: string) => number
+  defaultMinConfidence: number
   fetch: typeof globalThis.fetch
   maxQuestions?: number
   maxBodyBytes: number
@@ -25,11 +25,9 @@ export function resolveSystemOneProviderConfig(
     defaultMinConfidence?: number
     fetch?: typeof globalThis.fetch
   },
-  defaults: Omit<SystemOneProviderConfig, 'apiKey' | 'modelId' | 'minConfidenceForModel' | 'fetch'> & {
+  defaults: Omit<SystemOneProviderConfig, 'apiKey' | 'modelId' | 'fetch'> & {
     apiKeyEnvironmentVariable: string
     modelId: string
-    modelMinConfidence: Readonly<Record<string, number>>
-    fallbackMinConfidence: number
     className: string
   }
 ): SystemOneProviderConfig {
@@ -45,16 +43,10 @@ export function resolveSystemOneProviderConfig(
   }
 
   const modelId = options.modelId?.trim() || defaults.modelId
-  const configuredMinConfidence = options.defaultMinConfidence
-  if (
-    configuredMinConfidence !== undefined &&
-    (!Number.isFinite(configuredMinConfidence) || configuredMinConfidence < 0 || configuredMinConfidence > 1)
-  ) {
+  const defaultMinConfidence = options.defaultMinConfidence ?? defaults.defaultMinConfidence
+  if (!Number.isFinite(defaultMinConfidence) || defaultMinConfidence < 0 || defaultMinConfidence > 1) {
     throw new Error(`${defaults.className} defaultMinConfidence must be in [0.0, 1.0]`)
   }
-  const requestedModelMinConfidence = defaults.modelMinConfidence[modelId] ?? defaults.fallbackMinConfidence
-  const minConfidenceForModel = (resolvedModelId: string): number =>
-    configuredMinConfidence ?? defaults.modelMinConfidence[resolvedModelId] ?? requestedModelMinConfidence
 
   const fetchImplementation = options.fetch ?? globalThis.fetch
   if (typeof fetchImplementation !== 'function') {
@@ -66,7 +58,7 @@ export function resolveSystemOneProviderConfig(
     endpoint: defaults.endpoint,
     apiKey,
     modelId,
-    minConfidenceForModel,
+    defaultMinConfidence,
     fetch: (input, init) => fetchImplementation(input, init),
     ...(defaults.maxQuestions !== undefined && { maxQuestions: defaults.maxQuestions }),
     maxBodyBytes: defaults.maxBodyBytes,
@@ -146,7 +138,7 @@ export async function askSystemOne<const Q extends Record<string, Question>>(
   const payload = await readPayload(response)
   if (!response.ok) throw translateHttpError(config.providerName, response.status, payload)
 
-  const result = parseResult(payload, questions, config.minConfidenceForModel)
+  const result = parseResult(payload, questions, config.defaultMinConfidence)
   return {
     answers: result.answers,
     ...(result.usage !== undefined && { usage: result.usage }),
@@ -233,7 +225,7 @@ function errorDetail(body: unknown): string | undefined {
 function parseResult<const Q extends Record<string, Question>>(
   payload: unknown,
   questions: Q,
-  minConfidenceForModel: (modelId: string) => number
+  defaultMinConfidence: number
 ): {
   modelId: string
   answers: { [K in keyof Q]: AnswerOf<Q[K]> }
@@ -243,7 +235,6 @@ function parseResult<const Q extends Record<string, Question>>(
 } {
   const response = requireRecord(payload, 'decision provider response')
   const modelId = requireNonEmptyString(response['model'], 'decision provider model')
-  const defaultMinConfidence = minConfidenceForModel(modelId)
   const rawAnswers = requireRecord(response['answers'], 'decision provider answers')
   const answers = {} as { [K in keyof Q]: AnswerOf<Q[K]> }
   const probabilities = {} as { [K in keyof Q]: Readonly<Record<string, number>> }

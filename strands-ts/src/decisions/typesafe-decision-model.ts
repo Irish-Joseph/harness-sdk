@@ -8,14 +8,7 @@ import type { DecisionInput, DecisionResult, Question } from './types.js'
 
 const TYPE_SAFE_ENDPOINT = 'https://api.typesafe.ai/v1/systemone'
 const TYPE_SAFE_DEFAULT_MODEL_ID = 'jev-latest'
-const TYPE_SAFE_FALLBACK_MIN_CONFIDENCE = 0.5
-const TYPE_SAFE_MIN_CONFIDENCE_BY_MODEL: Readonly<Record<string, number>> = {
-  'jev-latest': 0.5,
-  'jev-1.14': 0.5,
-  'jev-1.14.0': 0.5,
-  'jev-1.13': 0.5,
-  'jev-1.13.0': 0.5,
-}
+const TYPE_SAFE_DEFAULT_MIN_CONFIDENCE = 0.5
 const TYPE_SAFE_MAX_BODY_BYTES = 32 * 1024 * 1024
 
 /** Options for constructing a {@link TypeSafeDecisionModel}. */
@@ -24,7 +17,7 @@ export interface TypeSafeDecisionModelOptions {
   readonly apiKey?: string
   /** Jev model identifier. Defaults to `jev-latest`. */
   readonly modelId?: string
-  /** Default minimum confidence; defaults to the model threshold or `0.5`. */
+  /** Default minimum confidence. Defaults to `0.5`. */
   readonly defaultMinConfidence?: number
   /** Custom fetch implementation, primarily for transport configuration and tests. */
   readonly fetch?: typeof globalThis.fetch
@@ -56,8 +49,7 @@ export class TypeSafeDecisionModel extends DecisionModel {
       endpoint: TYPE_SAFE_ENDPOINT,
       apiKeyEnvironmentVariable: 'TYPESAFE_API_KEY',
       modelId: TYPE_SAFE_DEFAULT_MODEL_ID,
-      modelMinConfidence: TYPE_SAFE_MIN_CONFIDENCE_BY_MODEL,
-      fallbackMinConfidence: TYPE_SAFE_FALLBACK_MIN_CONFIDENCE,
+      defaultMinConfidence: TYPE_SAFE_DEFAULT_MIN_CONFIDENCE,
       maxBodyBytes: TYPE_SAFE_MAX_BODY_BYTES,
     })
   }
