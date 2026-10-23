@@ -8,6 +8,7 @@ from typing import Any
 import opentelemetry.trace as trace_api
 from opentelemetry.trace import SpanKind, StatusCode
 
+from ..agent.invocation_context import InvocationContext, _unwrap_invocation_context
 from .types import DecisionInput, DecisionResult, Question, Uncertain
 
 
@@ -16,16 +17,26 @@ class DecisionModel(abc.ABC):
 
     The public ``ask`` opens a ``decision`` span, validates the question map, delegates to the
     subclass ``_ask``, records usage and the answer set as span attributes/events, and closes the
-    span. Every implementation is traced identically.
+    span. Every implementation is traced identically. Given an ``invocation_context``, ``ask``
+    also adds the reported usage to that request once ``_ask`` returns.
     """
 
-    async def ask(self, state: DecisionInput, questions: dict[str, Question], **kwargs: Any) -> DecisionResult:
+    async def ask(
+        self,
+        state: DecisionInput,
+        questions: dict[str, Question],
+        *,
+        invocation_context: InvocationContext | None = None,
+        **kwargs: Any,
+    ) -> DecisionResult:
         """Ask one or more closed questions over the given state.
 
         Args:
             state: A plain string, a one-shot content list, or a message history.
             questions: Map of identifier to question. The returned ``answers`` dict is keyed off
                 this same map.
+            invocation_context: Request to add this decision's token usage to. The request's limits
+                do not apply to the decision.
             **kwargs: Additional keyword arguments forwarded to the implementation for future
                 extensibility.
 
@@ -34,10 +45,12 @@ class DecisionModel(abc.ABC):
 
         Raises:
             ValueError: If ``questions`` is empty or a question violates its semantic constraints.
+            TypeError: If ``invocation_context`` was not created by the SDK.
             StructuredOutputException: If the model declines to produce a valid answer set, omits
                 an answer, or returns a value outside a question's allowed choices.
         """
         _validate_questions(questions)
+        invocation_context = _unwrap_invocation_context(invocation_context)
 
         span = trace_api.get_tracer(__name__).start_span(
             "decision", kind=SpanKind.INTERNAL, attributes={"gen_ai.operation.name": "decision"}
@@ -55,6 +68,8 @@ class DecisionModel(abc.ABC):
 
             attributes: dict[str, Any] = {"gen_ai.decision.latency_ms": result.metadata.latency_ms}
             if result.usage is not None:
+                if invocation_context is not None:
+                    invocation_context._record_usage(result.usage)
                 attributes["gen_ai.usage.input_tokens"] = result.usage["inputTokens"]
                 attributes["gen_ai.usage.output_tokens"] = result.usage["outputTokens"]
             span.set_attributes(attributes)
