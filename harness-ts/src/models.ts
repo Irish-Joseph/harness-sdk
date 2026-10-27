@@ -90,7 +90,9 @@ const BEDROCK_GPT_PREFIXES = ['openai.gpt-5.', 'openai.gpt-daybreak-', 'openai.g
 const ANTHROPIC_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'] as const
 const OPENAI_LEVELS = ['minimal', 'low', 'medium', 'high', 'xhigh', 'none'] as const
 const BEDROCK_GPT_LEVELS = ['none', 'low', 'medium', 'high', 'xhigh', 'max'] as const
-const BEDROCK_GPT_5_5_LEVELS = ['none', 'low', 'medium', 'high', 'xhigh'] as const
+// Converse rejects max on GPT-5.4/5.5 and none on GPT-6 Astra/6.1 Sol.
+const BEDROCK_GPT_NO_MAX_LEVELS = ['none', 'low', 'medium', 'high', 'xhigh'] as const
+const BEDROCK_GPT_NO_NONE_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'] as const
 const BEDROCK_GPT_OSS_LEVELS = ['low', 'medium', 'high'] as const
 const BEDROCK_QWEN_LEVELS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const
 const BEDROCK_XAI_LEVELS = ['low', 'medium', 'high', 'xhigh'] as const
@@ -168,7 +170,10 @@ function bedrockLevels(modelId: string): readonly string[] {
     return claudeThinkingMode(family) !== null ? ANTHROPIC_LEVELS : NO_THINKING_LEVELS
   }
   if (family.startsWith('openai.gpt-5.4') || family.startsWith('openai.gpt-5.5')) {
-    return BEDROCK_GPT_5_5_LEVELS
+    return BEDROCK_GPT_NO_MAX_LEVELS
+  }
+  if (family.startsWith('openai.gpt-6-astra') || family.startsWith('openai.gpt-6.1-sol')) {
+    return BEDROCK_GPT_NO_NONE_LEVELS
   }
   if (isBedrockGpt(family)) {
     return BEDROCK_GPT_LEVELS
@@ -331,7 +336,7 @@ interface Provider {
   // Native web search is enabled through model config on the providers whose SDK exposes a
   // non-clobbering seam for it (OpenAI Responses `params.tools` for OpenAI and bedrock-mantle, Gemini
   // `builtInTools`, Anthropic-direct `anthropicTools`); `hasWebSearch` narrows bedrock-mantle to its
-  // GPT-5/GPT-6 models. Bedrock Converse has no mechanism.
+  // GPT-5, GPT-6, and Daybreak models. Bedrock Converse has no mechanism.
   webSearch: boolean
   // Whether prompt caching is in effect when requested, whether or not the harness configures anything:
   // Bedrock and Anthropic direct (the harness sets cache points and tool caching) plus OpenAI, Google,

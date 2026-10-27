@@ -244,11 +244,14 @@ def test_openai_on_bedrock_maps_effort_to_reasoning_effort():
     assert model.config["additional_request_fields"] == {"reasoning": {"effort": "max"}}
 
 
-@pytest.mark.parametrize("model_id", ["openai.gpt-6-astra", "global.openai.gpt-6-astra", "us.openai.gpt-6-astra"])
-def test_astra_on_bedrock_resolves_effort(model_id):
-    for effort, level in [("auto", "high"), ("low", "low"), ("max", "max"), ("off", "none")]:
+@pytest.mark.parametrize(
+    "model_id", ["openai.gpt-6-astra", "global.openai.gpt-6-astra", "us.openai.gpt-6-astra", "us.openai.gpt-6.1-sol"]
+)
+def test_astra_and_6_1_sol_on_bedrock_resolve_effort_without_none(model_id):
+    for effort, level in [("auto", "high"), ("low", "low"), ("max", "max")]:
         model = resolve(f"bedrock/{model_id}", effort=effort)
         assert model.config["additional_request_fields"] == {"reasoning": {"effort": level}}
+    assert "additional_request_fields" not in resolve(f"bedrock/{model_id}", effort="off").config
     with pytest.raises(ValueError, match="not supported"):
         resolve(f"bedrock/{model_id}", effort="minimal")
 
@@ -257,7 +260,7 @@ def test_astra_on_bedrock_resolves_effort(model_id):
     "model_id", ["openai.gpt-5.4", "us.openai.gpt-5.4", "openai.gpt-5.5", "us.openai.gpt-5.5", "global.openai.gpt-5.5"]
 )
 def test_gpt_5_4_and_5_5_on_bedrock_resolve_effort_without_max(model_id):
-    # https://github.com/strands-agents/harness-sdk/issues/5191: Converse rejects max on 5.4 and 5.5.
+    # https://github.com/strands-agents/harness-sdk/issues/5191
     for effort, level in [("auto", "high"), ("low", "low"), ("xhigh", "xhigh"), ("off", "none")]:
         model = resolve(f"bedrock/{model_id}", effort=effort)
         assert model.config["additional_request_fields"] == {"reasoning": {"effort": level}}
@@ -267,9 +270,16 @@ def test_gpt_5_4_and_5_5_on_bedrock_resolve_effort_without_max(model_id):
 
 
 @pytest.mark.parametrize(
-    "model_id", ["openai.gpt-5.6-cyber", "openai.gpt-daybreak-blue-5.6-sol", "us.openai.gpt-daybreak-blue-5.6-sol"]
+    "model_id",
+    [
+        "openai.gpt-5.6-cyber",
+        "us.openai.gpt-6-sol",
+        "us.openai.gpt-6.1-terra",
+        "openai.gpt-daybreak-blue-5.6-sol",
+        "us.openai.gpt-daybreak-blue-5.6-sol",
+    ],
 )
-def test_daybreak_on_bedrock_resolves_effort(model_id):
+def test_gpt_5_6_6_and_daybreak_on_bedrock_resolve_every_effort(model_id):
     for effort, level in [("auto", "high"), ("low", "low"), ("max", "max"), ("off", "none")]:
         model = resolve(f"bedrock/{model_id}", effort=effort)
         assert model.config["additional_request_fields"] == {"reasoning": {"effort": level}}

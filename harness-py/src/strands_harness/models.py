@@ -94,7 +94,9 @@ _BEDROCK_WEB_FETCH_FAMILY_MODELS = {
 _ANTHROPIC_LEVELS = ("low", "medium", "high", "xhigh", "max")
 _OPENAI_LEVELS = ("minimal", "low", "medium", "high", "xhigh", "none")
 _BEDROCK_GPT_LEVELS = ("none", "low", "medium", "high", "xhigh", "max")
-_BEDROCK_GPT_5_5_LEVELS = ("none", "low", "medium", "high", "xhigh")
+# Converse rejects max on GPT-5.4/5.5 and none on GPT-6 Astra/6.1 Sol.
+_BEDROCK_GPT_NO_MAX_LEVELS = ("none", "low", "medium", "high", "xhigh")
+_BEDROCK_GPT_NO_NONE_LEVELS = ("low", "medium", "high", "xhigh", "max")
 _BEDROCK_GPT_OSS_LEVELS = ("low", "medium", "high")
 _BEDROCK_QWEN_LEVELS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 _BEDROCK_XAI_LEVELS = ("low", "medium", "high", "xhigh")
@@ -155,7 +157,9 @@ def _bedrock_levels(model_id: str) -> tuple[str, ...]:
     if family.startswith("amazon.nova-2"):
         return _BEDROCK_NOVA_LEVELS
     if family.startswith(("openai.gpt-5.4", "openai.gpt-5.5")):
-        return _BEDROCK_GPT_5_5_LEVELS
+        return _BEDROCK_GPT_NO_MAX_LEVELS
+    if family.startswith(("openai.gpt-6-astra", "openai.gpt-6.1-sol")):
+        return _BEDROCK_GPT_NO_NONE_LEVELS
     if family.startswith(_BEDROCK_GPT_PREFIXES):
         return _BEDROCK_GPT_LEVELS
     if family.startswith("openai.gpt-oss-"):
@@ -297,7 +301,7 @@ class Provider(NamedTuple):
     ``web_search`` is enabled through model config on the providers whose SDK exposes a
     non-clobbering seam for it (OpenAI Responses ``params.tools`` for OpenAI and bedrock-mantle,
     Gemini ``gemini_tools``, Anthropic-direct ``anthropic_tools``); ``_has_web_search`` narrows
-    bedrock-mantle to its GPT-5/GPT-6 models. Bedrock Converse has no mechanism.
+    bedrock-mantle to its GPT-5, GPT-6, and Daybreak models. Bedrock Converse has no mechanism.
 
     ``caching`` marks providers where prompt caching is in effect when requested, whether or not
     the harness configures anything: Bedrock and Anthropic direct (the harness sets cache points and tool caching)
