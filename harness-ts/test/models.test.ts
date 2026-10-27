@@ -165,33 +165,44 @@ describe('resolveModel', () => {
     }
   )
 
-  // https://github.com/strands-agents/harness-sdk/issues/5191 — Converse accepts
-  // reasoning.effort for the whole GPT-5 line, not only the .6 minor.
-  it.each([
-    'openai.gpt-5.4',
-    'us.openai.gpt-5.4',
-    'openai.gpt-5.5',
-    'us.openai.gpt-5.5',
-    'global.openai.gpt-5.5',
-    'openai.gpt-5.6-cyber',
-    'openai.gpt-daybreak-blue-5.6-sol',
-    'us.openai.gpt-daybreak-blue-5.6-sol',
-  ])('resolves GPT-5 line effort for %s', async (modelId) => {
-    for (const [thinking, effort] of [
-      ['auto', 'high'],
-      ['low', 'low'],
-      ['max', 'max'],
-    ] as const) {
-      const model = await resolve(`bedrock/${modelId}`, thinking)
-      expect(model.getConfig().additionalRequestFields).toEqual({ reasoning: { effort } })
+  // https://github.com/strands-agents/harness-sdk/issues/5191: Converse rejects max on 5.4 and 5.5.
+  it.each(['openai.gpt-5.4', 'us.openai.gpt-5.4', 'openai.gpt-5.5', 'us.openai.gpt-5.5', 'global.openai.gpt-5.5'])(
+    'resolves GPT-5.4/5.5 effort without max for %s',
+    async (modelId) => {
+      for (const [thinking, effort] of [
+        ['auto', 'high'],
+        ['low', 'low'],
+        ['xhigh', 'xhigh'],
+        ['off', 'none'],
+      ] as const) {
+        const model = await resolve(`bedrock/${modelId}`, thinking)
+        expect(model.getConfig().additionalRequestFields).toEqual({ reasoning: { effort } })
+      }
+      for (const thinking of ['minimal', 'max'] as const) {
+        await expect(resolve(`bedrock/${modelId}`, thinking)).rejects.toThrow(
+          "Supported levels: low, medium, high, xhigh (or 'auto', 'off')."
+        )
+      }
     }
-    expect((await resolve(`bedrock/${modelId}`, 'off')).getConfig().additionalRequestFields).toEqual({
-      reasoning: { effort: 'none' },
-    })
-    await expect(resolve(`bedrock/${modelId}`, 'minimal')).rejects.toThrow(
-      "Supported levels: low, medium, high, xhigh, max (or 'auto', 'off')."
-    )
-  })
+  )
+
+  it.each(['openai.gpt-5.6-cyber', 'openai.gpt-daybreak-blue-5.6-sol', 'us.openai.gpt-daybreak-blue-5.6-sol'])(
+    'resolves Daybreak effort for %s',
+    async (modelId) => {
+      for (const [thinking, effort] of [
+        ['auto', 'high'],
+        ['low', 'low'],
+        ['max', 'max'],
+        ['off', 'none'],
+      ] as const) {
+        const model = await resolve(`bedrock/${modelId}`, thinking)
+        expect(model.getConfig().additionalRequestFields).toEqual({ reasoning: { effort } })
+      }
+      await expect(resolve(`bedrock/${modelId}`, 'minimal')).rejects.toThrow(
+        "Supported levels: low, medium, high, xhigh, max (or 'auto', 'off')."
+      )
+    }
+  )
 
   it('uses the Qwen Bedrock reasoning field and levels', async () => {
     const model = await resolve('bedrock/qwen.qwen3-32b-v1:0', 'minimal')

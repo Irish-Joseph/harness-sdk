@@ -254,21 +254,22 @@ def test_astra_on_bedrock_resolves_effort(model_id):
 
 
 @pytest.mark.parametrize(
-    "model_id",
-    [
-        "openai.gpt-5.4",
-        "us.openai.gpt-5.4",
-        "openai.gpt-5.5",
-        "us.openai.gpt-5.5",
-        "global.openai.gpt-5.5",
-        "openai.gpt-5.6-cyber",
-        "openai.gpt-daybreak-blue-5.6-sol",
-        "us.openai.gpt-daybreak-blue-5.6-sol",
-    ],
+    "model_id", ["openai.gpt-5.4", "us.openai.gpt-5.4", "openai.gpt-5.5", "us.openai.gpt-5.5", "global.openai.gpt-5.5"]
 )
-def test_gpt_5_line_on_bedrock_resolves_effort(model_id):
-    # https://github.com/strands-agents/harness-sdk/issues/5191 — Converse accepts
-    # reasoning.effort for the whole GPT-5 line, not only the .6 minor.
+def test_gpt_5_4_and_5_5_on_bedrock_resolve_effort_without_max(model_id):
+    # https://github.com/strands-agents/harness-sdk/issues/5191: Converse rejects max on 5.4 and 5.5.
+    for effort, level in [("auto", "high"), ("low", "low"), ("xhigh", "xhigh"), ("off", "none")]:
+        model = resolve(f"bedrock/{model_id}", effort=effort)
+        assert model.config["additional_request_fields"] == {"reasoning": {"effort": level}}
+    for effort in ("minimal", "max"):
+        with pytest.raises(ValueError, match="not supported"):
+            resolve(f"bedrock/{model_id}", effort=effort)
+
+
+@pytest.mark.parametrize(
+    "model_id", ["openai.gpt-5.6-cyber", "openai.gpt-daybreak-blue-5.6-sol", "us.openai.gpt-daybreak-blue-5.6-sol"]
+)
+def test_daybreak_on_bedrock_resolves_effort(model_id):
     for effort, level in [("auto", "high"), ("low", "low"), ("max", "max"), ("off", "none")]:
         model = resolve(f"bedrock/{model_id}", effort=effort)
         assert model.config["additional_request_fields"] == {"reasoning": {"effort": level}}

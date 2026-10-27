@@ -9,6 +9,8 @@ const CLAUDE_EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'] as const
 const OPENAI_EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'] as const
 const GOOGLE_EFFORTS = ['minimal', 'low', 'medium', 'high'] as const
 const BEDROCK_GPT_EFFORTS = ['none', 'low', 'medium', 'high', 'xhigh', 'max'] as const
+const BEDROCK_GPT_5_5_EFFORTS = ['none', 'low', 'medium', 'high', 'xhigh'] as const
+const BEDROCK_GPT_PREFIXES = ['openai.gpt-5.', 'openai.gpt-daybreak-', 'openai.gpt-6-', 'openai.gpt-6.'] as const
 const BEDROCK_GPT_OSS_EFFORTS = ['low', 'medium', 'high'] as const
 const BEDROCK_QWEN_EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const
 const BEDROCK_XAI_EFFORTS = ['low', 'medium', 'high', 'xhigh'] as const
@@ -137,12 +139,10 @@ function effortLevels(modelId: string): readonly string[] {
   if (family.startsWith('anthropic.')) {
     return CLAUDE_EFFORTS
   }
-  if (
-    family.startsWith('openai.gpt-5.') ||
-    family.startsWith('openai.gpt-daybreak-') ||
-    family.startsWith('openai.gpt-6-') ||
-    family.startsWith('openai.gpt-6.')
-  ) {
+  if (family.startsWith('openai.gpt-5.4') || family.startsWith('openai.gpt-5.5')) {
+    return BEDROCK_GPT_5_5_EFFORTS
+  }
+  if (BEDROCK_GPT_PREFIXES.some((prefix) => family.startsWith(prefix))) {
     return BEDROCK_GPT_EFFORTS
   }
   if (family.startsWith('openai.gpt-oss-')) {
